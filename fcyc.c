@@ -1,11 +1,11 @@
 /*
- * fcyc.c - Estimate the time (in CPU cycles) used by a function f 
+ * fcyc.c - 함수 f가 사용한 시간(CPU 사이클 단위)을 추정한다
  * 
  * Copyright (c) 2002, R. Bryant and D. O'Hallaron, All rights reserved.
  * May not be used, modified, or copied without permission.
  *
- * Uses the cycle timer routines in clock.c to estimate the
- * the time in CPU cycles for a function f.
+ * clock.c의 사이클 타이머 루틴을 사용해 함수 f의 CPU 사이클 수를
+ * 추정한다.
  */
 #include <stdlib.h>
 #include <sys/times.h>
@@ -14,14 +14,14 @@
 #include "fcyc.h"
 #include "clock.h"
 
-/* Default values */
-#define K 3                  /* Value of K in K-best scheme */
-#define MAXSAMPLES 20        /* Give up after MAXSAMPLES */
-#define EPSILON 0.01         /* K samples should be EPSILON of each other*/
-#define COMPENSATE 0         /* 1-> try to compensate for clock ticks */
-#define CLEAR_CACHE 0        /* Clear cache before running test function */
-#define CACHE_BYTES (1<<19)  /* Max cache size in bytes */
-#define CACHE_BLOCK 32       /* Cache block size in bytes */
+/* 기본값 */
+#define K 3                  /* K-best 방식에서의 K 값 */
+#define MAXSAMPLES 20        /* MAXSAMPLES 이후에는 중단 */
+#define EPSILON 0.01         /* K개의 샘플이 이 값 이내로 가까워야 함 */
+#define COMPENSATE 0         /* 1이면 클럭 tick 오버헤드를 보정 시도 */
+#define CLEAR_CACHE 0        /* 테스트 함수 실행 전 캐시 비우기 */
+#define CACHE_BYTES (1<<19)  /* 최대 캐시 크기(바이트) */
+#define CACHE_BLOCK 32       /* 캐시 블록 크기(바이트) */
 
 static int kbest = K;
 static int maxsamples = MAXSAMPLES;
@@ -36,7 +36,7 @@ static int *cache_buf = NULL;
 static double *values = NULL;
 static int samplecount = 0;
 
-/* for debugging only */
+/* 디버깅 전용 */
 #define KEEP_VALS 0
 #define KEEP_SAMPLES 0
 
@@ -45,7 +45,7 @@ static double *samples = NULL;
 #endif
 
 /* 
- * init_sampler - Start new sampling process 
+ * init_sampler - 새 샘플링 과정을 시작한다
  */
 static void init_sampler()
 {
@@ -55,14 +55,14 @@ static void init_sampler()
 #if KEEP_SAMPLES
     if (samples)
 	free(samples);
-    /* Allocate extra for wraparound analysis */
+    /* wraparound 분석을 위해 여유 공간을 더 할당한다 */
     samples = calloc(maxsamples+kbest, sizeof(double));
 #endif
     samplecount = 0;
 }
 
 /* 
- * add_sample - Add new sample  
+ * add_sample - 새 샘플을 추가한다
  */
 static void add_sample(double val)
 {
@@ -78,7 +78,7 @@ static void add_sample(double val)
     samples[samplecount] = val;
 #endif
     samplecount++;
-    /* Insertion sort */
+    /* 삽입 정렬 */
     while (pos > 0 && values[pos-1] > values[pos]) {
 	double temp = values[pos-1];
 	values[pos-1] = values[pos];
@@ -88,7 +88,7 @@ static void add_sample(double val)
 }
 
 /* 
- * has_converged- Have kbest minimum measurements converged within epsilon? 
+ * has_converged - kbest 최소 측정값들이 epsilon 범위 안으로 수렴했는가?
  */
 static int has_converged()
 {
@@ -98,7 +98,7 @@ static int has_converged()
 }
 
 /* 
- * clear - Code to clear cache 
+ * clear - 캐시를 비우는 코드
  */
 static volatile int sink = 0;
 
@@ -124,7 +124,7 @@ static void clear()
 }
 
 /*
- * fcyc - Use K-best scheme to estimate the running time of function f
+ * fcyc - K-best 방식을 사용해 함수 f의 실행 시간을 추정한다
  */
 double fcyc(test_funct f, void *argp)
 {
@@ -169,13 +169,13 @@ double fcyc(test_funct f, void *argp)
 
 
 /*************************************************************
- * Set the various parameters used by the measurement routines 
+ * 측정 루틴에서 사용하는 여러 매개변수를 설정한다
  ************************************************************/
 
 /* 
- * set_fcyc_clear_cache - When set, will run code to clear cache 
- *     before each measurement. 
- *     Default = 0
+ * set_fcyc_clear_cache - 설정하면 각 측정 전에 캐시를 비우는
+ *     코드를 실행한다.
+ *     기본값 = 0
  */
 void set_fcyc_clear_cache(int clear)
 {
@@ -183,8 +183,8 @@ void set_fcyc_clear_cache(int clear)
 }
 
 /* 
- * set_fcyc_cache_size - Set size of cache to use when clearing cache 
- *     Default = 1<<19 (512KB)
+ * set_fcyc_cache_size - 캐시를 비울 때 사용할 캐시 크기를 설정한다.
+ *     기본값 = 1<<19 (512KB)
  */
 void set_fcyc_cache_size(int bytes)
 {
@@ -198,8 +198,8 @@ void set_fcyc_cache_size(int bytes)
 }
 
 /* 
- * set_fcyc_cache_block - Set size of cache block 
- *     Default = 32
+ * set_fcyc_cache_block - 캐시 블록 크기를 설정한다.
+ *     기본값 = 32
  */
 void set_fcyc_cache_block(int bytes) {
     cache_block = bytes;
@@ -207,9 +207,9 @@ void set_fcyc_cache_block(int bytes) {
 
 
 /* 
- * set_fcyc_compensate- When set, will attempt to compensate for 
- *     timer interrupt overhead 
- *     Default = 0
+ * set_fcyc_compensate - 설정하면 타이머 인터럽트 오버헤드를
+ *     보정하려고 시도한다.
+ *     기본값 = 0
  */
 void set_fcyc_compensate(int compensate_arg)
 {
@@ -217,8 +217,8 @@ void set_fcyc_compensate(int compensate_arg)
 }
 
 /* 
- * set_fcyc_k - Value of K in K-best measurement scheme
- *     Default = 3
+ * set_fcyc_k - K-best 측정 방식에서 사용할 K 값을 설정한다.
+ *     기본값 = 3
  */
 void set_fcyc_k(int k)
 {
@@ -226,10 +226,10 @@ void set_fcyc_k(int k)
 }
 
 /* 
- * set_fcyc_maxsamples - Maximum number of samples attempting to find 
- *     K-best within some tolerance.
- *     When exceeded, just return best sample found.
- *     Default = 20
+ * set_fcyc_maxsamples - 허용 오차 범위 안에서 K-best를 찾기 위해
+ *     시도할 최대 샘플 수를 설정한다.
+ *     이를 초과하면 지금까지 찾은 최적 샘플을 반환한다.
+ *     기본값 = 20
  */
 void set_fcyc_maxsamples(int maxsamples_arg)
 {
@@ -237,8 +237,8 @@ void set_fcyc_maxsamples(int maxsamples_arg)
 }
 
 /* 
- * set_fcyc_epsilon - Tolerance required for K-best
- *     Default = 0.01
+ * set_fcyc_epsilon - K-best에 필요한 허용 오차를 설정한다.
+ *     기본값 = 0.01
  */
 void set_fcyc_epsilon(double epsilon_arg)
 {
